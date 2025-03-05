@@ -9,8 +9,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.util.AlternativeJdkIdGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.springprojects.securedoc.domain.RequestContext;
-import com.springprojects.securedoc.exception.ApiException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
@@ -19,7 +17,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.NotNull;

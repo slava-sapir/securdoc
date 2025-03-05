@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 
 docker/.env
+src/main/resources/application-dev.yml
 
 ### STS ###
 .apt_generated

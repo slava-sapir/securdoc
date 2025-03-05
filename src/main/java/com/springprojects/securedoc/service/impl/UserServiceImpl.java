@@ -1,6 +1,7 @@
 package com.springprojects.securedoc.service.impl;
 
 import static com.springprojects.securedoc.utils.UserUtils.createUserEntity;
+import static com.springprojects.securedoc.utils.UserUtils.*;
 
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.springprojects.securedoc.cashe.CacheStore;
 import com.springprojects.securedoc.domain.RequestContext;
+import com.springprojects.securedoc.dto.User;
 import com.springprojects.securedoc.entity.ConfirmationEntity;
 import com.springprojects.securedoc.entity.CredentialEntity;
 import com.springprojects.securedoc.entity.RoleEntity;
@@ -58,11 +60,6 @@ public class UserServiceImpl implements UserService {
 		return role.orElseThrow( () -> new ApiException("Role not found"));
 	}
 	
-	private UserEntity createNewUser(String firstName, String lastName, String email) {
-		var role = getRoleName(Authority.USER.name());
-		return createUserEntity(firstName, lastName, email, role);
-	}
-
 	@Override
 	public void verifyAccountKey(String key) {
 		var confirmationEntity = getUserConfirmation(key);
@@ -70,19 +67,9 @@ public class UserServiceImpl implements UserService {
 		userEntity.setEnabled(true);
 		userRepository.save(userEntity);
 		confirmationRepository.delete(confirmationEntity);
-		
 	}
-
-	private UserEntity getUserEntityByEmail(String email) {
-		var userByEmail = userRepository.findByEmailIgnoreCase(email);
-		return userByEmail.orElseThrow(() -> new ApiException("User not found"));
-	}
-
-	private ConfirmationEntity getUserConfirmation(String key) {
-		return confirmationRepository.findByKey(key).orElseThrow(() -> new ApiException("Confirmation key not found"));
-	}
-
-	@Override
+	
+    @Override
 	public void updateLoginAttempt(String email, LoginType loginType) {
 	   	var userEntity = getUserEntityByEmail(email);
 	   	RequestContext.setUserId(userEntity.getId());
@@ -105,5 +92,37 @@ public class UserServiceImpl implements UserService {
 		   	}
 	   	}
 	   	userRepository.save(userEntity);
+	}
+    
+    @Override
+   	public User getUserByUserId(String userId) {
+    	var userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found"));
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+   	}
+    
+    @Override
+	public User getUserByEmail(String email) {
+		UserEntity userEntity = getUserEntityByEmail(email);
+		return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+	}
+    
+	@Override
+    public CredentialEntity getUserCredentialById(Long userId) {
+        var credentialById = credentialRepository.getCredentialByUserEntityId(userId);
+        return credentialById.orElseThrow(() -> new ApiException("Unable to find user credential"));
+    }
+    
+	private UserEntity getUserEntityByEmail(String email) {
+		var userByEmail = userRepository.findByEmailIgnoreCase(email);
+		return userByEmail.orElseThrow(() -> new ApiException("User not found"));
+	}
+
+	private UserEntity createNewUser(String firstName, String lastName, String email) {
+		var role = getRoleName(Authority.USER.name());
+		return createUserEntity(firstName, lastName, email, role);
+	}
+	
+	private ConfirmationEntity getUserConfirmation(String key) {
+		return confirmationRepository.findByKey(key).orElseThrow(() -> new ApiException("Confirmation key not found"));
 	}
 }

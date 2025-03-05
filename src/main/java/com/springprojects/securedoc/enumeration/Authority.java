@@ -1,5 +1,5 @@
 package com.springprojects.securedoc.enumeration;
-import static com.springprojects.securedoc.contant.Constants.*;
+import static com.springprojects.securedoc.constant.Constants.*;
 
 public enum Authority {
    USER(USER_AUTHORITIES),

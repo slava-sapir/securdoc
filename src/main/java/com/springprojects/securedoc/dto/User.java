@@ -2,7 +2,6 @@ package com.springprojects.securedoc.dto;
 
 import lombok.Data;
 
-
 @Data
 public class User {
 	   private Long id;
