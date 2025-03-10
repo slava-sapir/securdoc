@@ -1,6 +1,6 @@
 package com.springprojects.securedoc.security;
 
-import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT;
+import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
 import static com.springprojects.securedoc.constant.Constants.*;
 import static com.springprojects.securedoc.domain.ApiAuthentication.unauthenticated;
 import static com.springprojects.securedoc.utils.RequestUtils.handleErrorResponse;
@@ -50,7 +50,7 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
 		try {
-			var user = new ObjectMapper().configure(AUTO_CLOSE_JSON_CONTENT, true).readValue(request.getInputStream(), LoginRequest.class);
+			var user = new ObjectMapper().configure(AUTO_CLOSE_SOURCE, true).readValue(request.getInputStream(), LoginRequest.class);
 			userService.updateLoginAttempt(user.getEmail(), LoginType.LOGIN_ATTEMPT);
 			var authentication = unauthenticated(user.getEmail(), user.getPassword());
 			return getAuthenticationManager().authenticate(authentication);
@@ -64,7 +64,6 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 			Authentication authentication) throws IOException, ServletException {
-		super.successfulAuthentication(request, response, chain, authentication);
 		var user = (User) authentication.getPrincipal();
 		userService.updateLoginAttempt(user.getEmail(), LoginType.LOGIN_SUCCESS);
 		var httpResponse = user.isMfa() ? sendQrCode(request, user) : sendResponse(request, response, user);
@@ -75,7 +74,7 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 		mapper.writeValue(out, httpResponse);
 		out.flush();
 	}
-
+	
 	private Response sendResponse(HttpServletRequest request, HttpServletResponse response, User user) {
 		jwtService.addCookie(response, user, TokenType.ACCESS);
 		jwtService.addCookie(response, user, TokenType.REFRESH);
