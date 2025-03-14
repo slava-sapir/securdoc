@@ -45,13 +45,13 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	@Async
-	public void sendPasswordResetEmail(String name, String email, String token) {
+	public void sendPasswordResetEmail(String name, String email, String key) {
 		try {
 			var message = new SimpleMailMessage();
 			message.setSubject(PASSWORD_RESET_REQUEST);
 			message.setFrom(fromEmail);
 			message.setTo(email);
-			message.setText(getResetPasswordMessage(name, host, token));
+			message.setText(getResetPasswordMessage(name, host, key));
 			sender.send(message);
 		} catch (Exception exception) {
 			log.error(exception.getMessage());

@@ -26,7 +26,7 @@ public class Application {
 //		    
 //		    var adminRole = new RoleEntity();
 //		    adminRole.setName(Authority.ADMIN.name());
-//		    adminRole.setAuthorities(Authority.USER);
+//		    adminRole.setAuthorities(Authority.ADMIN);
 //		    roleRepository.save(adminRole);
 //		    
 //		    RequestContext.start();

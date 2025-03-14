@@ -10,4 +10,5 @@ import com.springprojects.securedoc.entity.RoleEntity;
 @Repository
 public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
      Optional<RoleEntity> findByNameIgnoreCase(String name);
+     Optional<RoleEntity> findByName(String name);
 }

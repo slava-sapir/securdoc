@@ -13,4 +13,12 @@ public interface UserService {
    User getUserByEmail(String email);
    User getUserByUserId(String userId);
    CredentialEntity getUserCredentialById(Long userId);
+   User setUpMfa(Long id);
+   User cancelMfa(Long id);
+   User verifyQrCode(String userId, String qrCode);
+   void resetPassword(String email);
+   User verifyPasswordKey(String key);
+   void updatePassword(String userId, String newPassword, String confirmNewPassword);
+   User updateUser(String userId, String firstName, String lastName, String email, String phone, String bio);
+   void updateRole(String userId, String role);
 }

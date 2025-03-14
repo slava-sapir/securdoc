@@ -37,7 +37,6 @@ public class UserEntity extends Auditable {
    
    @Column(unique = true, nullable = false)
    private String email;
-   
    private Integer loginAttempts;
    private LocalDateTime lastLogin;
    private String phone;
@@ -51,8 +50,7 @@ public class UserEntity extends Auditable {
    @JsonIgnore
    private String qrCodeSecret;
    @Column(columnDefinition = "text")
-   
-   private String qrCodeImaheUri;
+   private String qrCodeImageUri;
    @ManyToOne(fetch = FetchType.EAGER)
    @JoinTable(
 		   name = "user_roles",
@@ -61,6 +59,5 @@ public class UserEntity extends Auditable {
 		   inverseJoinColumns = @JoinColumn(
 				   name = "role_id", referencedColumnName = "id")
    )
-   
    private RoleEntity role;
 }
