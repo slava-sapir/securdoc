@@ -5,12 +5,22 @@ import static com.springprojects.securedoc.utils.UserUtils.*;
 import static java.time.LocalDateTime.now;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static com.springprojects.securedoc.validation.UserValidation.verifyAccountStatus;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static com.springprojects.securedoc.constant.Constants.*;
+import static java.util.stream.Collectors.toList;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.springprojects.securedoc.cashe.CacheStore;
 import com.springprojects.securedoc.domain.RequestContext;
@@ -45,7 +55,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
+    
+	private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
@@ -185,6 +196,17 @@ public class UserServiceImpl implements UserService {
 	}
 	
 	@Override
+	public void updatePassword(String userId, String currentPassword, String newPassword, String confirmNewPassword) {
+		if( !confirmNewPassword.equals(newPassword)) { throw new ApiException("Passwords don't match. Please try again"); }
+		var user = getUserEntityByUserId(userId);
+		verifyAccountStatus(user);
+		var credentials = getUserCredentialById(user.getId());
+		if(!encoder.matches(currentPassword, credentials.getPassword())) { throw new ApiException(" Existing Password is incorrect. Please try again"); }
+		credentials.setPassword(encoder.encode(newPassword));
+		credentialRepository.save(credentials);
+	}
+	
+	@Override
 	public User updateUser(String userId, String firstName, String lastName, String email, String phone, String bio) {
 		var userEntity = getUserEntityByUserId(userId);
 		userEntity.setFirstName(firstName);
@@ -202,6 +224,76 @@ public class UserServiceImpl implements UserService {
 		userEntity.setRole(getRoleName(role));
 		userRepository.save(userEntity);
 	}
+	
+	@Override
+	public void toggleAccountExpired(String userId) {
+		var userEntity = getUserEntityByUserId(userId);
+		userEntity.setAccountNonExpired(!userEntity.isAccountNonExpired());
+		userRepository.save(userEntity);
+	}
+
+	@Override
+	public void toggleAccountLocked(String userId) {
+		var userEntity = getUserEntityByUserId(userId);
+		userEntity.setAccountNonLocked(!userEntity.isAccountNonLocked());
+		userRepository.save(userEntity);
+	}
+
+	@Override
+	public void toggleAccountEnabled(String userId) {
+		var userEntity = getUserEntityByUserId(userId);
+		userEntity.setEnabled(!userEntity.isEnabled());
+		userRepository.save(userEntity);	
+	}
+
+	@Override
+	public void toggleCredentialsExpired(String userId) {
+		var userEntity = getUserEntityByUserId(userId);
+		var credentials = getUserCredentialById(userEntity.getId());
+		credentials.setUpdatedAt(LocalDateTime.of(1995, 7, 12, 11, 11));
+		userRepository.save(userEntity);
+	}
+
+	@Override
+	public String updatePhoto(String userId, MultipartFile file) {
+		var user = getUserEntityByUserId(userId);
+		var photoUrl = photoFunction.apply(userId, file);
+		user.setImageUrl(photoUrl + "?timestamp=" + System.currentTimeMillis());
+		userRepository.save(user);
+		return photoUrl;
+	}
+	
+	@Override
+	public List<User> getUsers() {
+		 return userRepository.findAll()
+            .stream()
+            .filter(userEntity -> !"system@gmail.com".equalsIgnoreCase(userEntity.getEmail()))
+            .map(userEntity -> fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId())))
+            .collect(toList());
+	}
+
+    @Override
+    public User getUserById(Long id) {
+        var userEntity = userRepository.findById(id).orElseThrow(() -> new ApiException("User not found"));
+        return fromUserEntity(userEntity, userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+	private final BiFunction<String, MultipartFile, String> photoFunction = (id, file) -> {
+		var filename = id + ".png";
+		try {
+			var fileStorageLocation = Paths.get(FILE_STORAGE)
+					.toAbsolutePath().normalize();
+			if(!Files.exists(fileStorageLocation)) { Files.createDirectories(fileStorageLocation); }
+			Files.copy(file.getInputStream(), fileStorageLocation.resolve(filename), REPLACE_EXISTING);
+			return ServletUriComponentsBuilder
+					.fromCurrentContextPath()
+					.path("/user/image/" + filename)
+					.toUriString();
+			
+		} catch (Exception exception) {
+			throw new ApiException("unable to save image");
+		}
+	};
 	
 	private UserEntity getUserEntityByEmail(String email) {
         var userByEmail = userRepository.findByEmailIgnoreCase(email);

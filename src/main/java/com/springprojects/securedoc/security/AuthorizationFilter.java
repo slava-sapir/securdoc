@@ -35,7 +35,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
 
-@Override
+    @Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		try {
@@ -63,7 +63,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-		protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
 			var shouldNotFilter = request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS.name()) || 
 			asList(PUBLIC_ROUTES).contains(request.getRequestURI());
 			if(shouldNotFilter) { RequestContext.setUserId(0L); }

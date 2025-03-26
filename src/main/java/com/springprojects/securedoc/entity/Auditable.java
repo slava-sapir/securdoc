@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.util.AlternativeJdkIdGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.springprojects.securedoc.domain.RequestContext;
+import com.springprojects.securedoc.exception.ApiException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
@@ -50,8 +52,8 @@ public abstract class Auditable {
 	
 	@PrePersist
 	public void beforePersist() {
-		var userId = 0L; //RequestContext.getUserId();
-//		if(userId == null) { throw new ApiException("Cannot persist entity without user ID in RequestContext for this thread");}
+		var userId = RequestContext.getUserId();
+		if(userId == null) { throw new ApiException("Cannot persist entity without user ID in RequestContext for this thread");}
 	    setCreatedAt(now());
 	    setCreatedBy(userId);
 	    setUpdatedBy(userId);
@@ -60,8 +62,8 @@ public abstract class Auditable {
 	
 	@PreUpdate
 	public void beforeUpdate() {
-		var userId = 0L; //RequestContext.getUserId();
-//		if(userId == null) { throw new ApiException("Cannot update entity without user ID in RequestContext for this thread");}
+		var userId = RequestContext.getUserId();
+		if(userId == null) { throw new ApiException("Cannot update entity without user ID in RequestContext for this thread");}
 	    setUpdatedAt(now());
 	    setUpdatedBy(userId);
 	}
